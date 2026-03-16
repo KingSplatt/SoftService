@@ -1,0 +1,5 @@
+/target/
+
+# Optional IDE files
+/.idea/
+/.vscode/

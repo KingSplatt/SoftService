@@ -1,6 +1,7 @@
 package com.example.portal.softportal.services;
 
 import com.example.portal.softportal.DTOs.CreateUsuarioDto;
+import com.example.portal.softportal.DTOs.LoginResponseDto;
 import com.example.portal.softportal.DTOs.UsuarioDto;
 import com.example.portal.softportal.mapper.UsuarioMapper;
 import com.example.portal.softportal.models.Role;
@@ -9,6 +10,7 @@ import com.example.portal.softportal.repository.RoleRepository;
 import com.example.portal.softportal.repository.UsuarioRepository;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,5 +57,35 @@ public class UsuarioService {
                 .build();
 
         return UsuarioMapper.toDto(usuarioRepository.save(entity));
+    }
+
+    @Transactional(readOnly = true)
+    public LoginResponseDto login(String email, String password) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Email o contraseña incorrectos"));
+
+        // Verificar contraseña (en producción usar BCrypt)
+        if (!usuario.getPasswordHash().equals(password)) {
+            throw new IllegalArgumentException("Email o contraseña incorrectos");
+        }
+
+        // Generar token simple (en producción usar JWT)
+        String token = UUID.randomUUID().toString();
+
+        // Crear response con datos del usuario
+        LoginResponseDto.UserLoginDto userDto = LoginResponseDto.UserLoginDto.builder()
+                .idUsuario(usuario.getIdUsuario())
+                .email(usuario.getEmail())
+                .nombreUsuario(usuario.getNombreUsuario())
+                .idRol(usuario.getRol() != null ? usuario.getRol().getIdRol() : null)
+                .rolNombre(usuario.getRol() != null ? usuario.getRol().getNombre() : null)
+                .diasDisponibles(usuario.getDiasDisponibles())
+                .fechaCreacion(usuario.getFechaCreacion())
+                .build();
+
+        return LoginResponseDto.builder()
+                .token(token)
+                .user(userDto)
+                .build();
     }
 }
