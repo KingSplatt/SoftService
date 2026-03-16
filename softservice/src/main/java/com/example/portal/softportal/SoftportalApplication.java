@@ -1,0 +1,13 @@
+package com.example.portal.softportal;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SoftportalApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SoftportalApplication.class, args);
+	}
+
+}
