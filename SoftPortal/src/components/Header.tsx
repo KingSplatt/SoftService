@@ -5,9 +5,13 @@ import language from '../assets/Language.svg'
 import user from '../assets/user-regular-full.svg'
 import '../styles/Header.css'
 
-export default function Header() {
+interface HeaderProps {
+  onManageRolesClick?: () => void
+}
+
+export default function Header({ onManageRolesClick }: HeaderProps) {
   const navigate = useNavigate()
-  const { user: currentUser, logout } = useAuth()
+  const { user: currentUser, logout, isAdmin } = useAuth()
 
   const handleLogout = () => {
     logout()
@@ -29,8 +33,17 @@ export default function Header() {
                 </div>
                 <div className='contenedor-img user-info'>
                     <img src={user} alt="user" width={40} title={currentUser?.nombre_usuario}/>
-                    <span className='usuario-nombre'>{currentUser?.nombre_usuario}</span>
+                    <span className='usuario-nombre'>{currentUser?.nombre_usuario || 'Usuario'}</span>
                 </div>
+                {isAdmin && onManageRolesClick && (
+                  <button
+                    onClick={onManageRolesClick}
+                    className='admin-button'
+                    title='Gestionar roles'
+                  >
+                    Gestionar Roles
+                  </button>
+                )}
                 <button 
                   onClick={handleLogout}
                   className='logout-button'
