@@ -3,6 +3,8 @@ package com.example.portal.softportal.controllers;
 import com.example.portal.softportal.DTOs.CreateUsuarioDto;
 import com.example.portal.softportal.DTOs.LoginRequestDto;
 import com.example.portal.softportal.DTOs.LoginResponseDto;
+import com.example.portal.softportal.DTOs.RegisterUsuarioDto;
+import com.example.portal.softportal.DTOs.UpdateUsuarioRolDto;
 import com.example.portal.softportal.DTOs.UsuarioDto;
 import com.example.portal.softportal.services.UsuarioService;
 import java.util.List;
@@ -36,7 +38,22 @@ public class UsuarioControlador {
             LoginResponseDto response = usuarioService.login(request.getEmail(), request.getPassword());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Endpoint público de registro
+     */
+    @PostMapping("/register")
+    public ResponseEntity<UsuarioDto> register(@RequestBody RegisterUsuarioDto request) {
+        try {
+            UsuarioDto usuario = usuarioService.register(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -78,6 +95,21 @@ public class UsuarioControlador {
         try {
             UsuarioDto usuario = usuarioService.create(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Asignar rol a un usuario (solo admin)
+     */
+    @PostMapping("/{id}/rol")
+    public ResponseEntity<UsuarioDto> updateUserRole(@PathVariable Integer id, @RequestBody UpdateUsuarioRolDto request) {
+        try {
+            UsuarioDto usuario = usuarioService.updateUserRole(id, request.getIdRol(), request.getAdminUserId());
+            return ResponseEntity.ok(usuario);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {

@@ -2,6 +2,7 @@ package com.example.portal.softportal.services;
 
 import com.example.portal.softportal.DTOs.CreateUsuarioDto;
 import com.example.portal.softportal.DTOs.LoginResponseDto;
+import com.example.portal.softportal.DTOs.RegisterUsuarioDto;
 import com.example.portal.softportal.DTOs.UsuarioDto;
 import com.example.portal.softportal.mapper.UsuarioMapper;
 import com.example.portal.softportal.models.Role;
@@ -68,6 +69,49 @@ public class UsuarioService {
         if (!usuario.getPasswordHash().equals(password)) {
             throw new IllegalArgumentException("Email o contraseña incorrectos");
         }
+
+        return buildLoginResponse(usuario);
+    }
+
+    public UsuarioDto register(RegisterUsuarioDto dto) {
+        usuarioRepository.findByEmail(dto.getEmail()).ifPresent(existing -> {
+            throw new IllegalArgumentException("Ya existe un usuario con email: " + dto.getEmail());
+        });
+
+        Role userRole = roleRepository.findByNombreIgnoreCase("user")
+                .orElseThrow(() -> new IllegalArgumentException("No existe el rol 'user' en la base de datos"));
+
+        Usuario entity = Usuario.builder()
+                .nombreUsuario(dto.getNombreUsuario())
+                .email(dto.getEmail())
+                .passwordHash(dto.getPassword())
+                .rol(userRole)
+                .diasDisponibles(12)
+                .build();
+
+        return UsuarioMapper.toDto(usuarioRepository.save(entity));
+    }
+
+    public UsuarioDto updateUserRole(Integer userId, Integer roleId, Integer adminUserId) {
+        Usuario admin = usuarioRepository.findById(adminUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario administrador no encontrado"));
+
+        String adminRoleName = admin.getRol() != null ? admin.getRol().getNombre() : null;
+        if (adminRoleName == null || !"admin".equalsIgnoreCase(adminRoleName)) {
+            throw new IllegalArgumentException("Solo un administrador puede asignar roles");
+        }
+
+        Usuario userToUpdate = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con id: " + userId));
+
+        Role targetRole = roleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con id: " + roleId));
+
+        userToUpdate.setRol(targetRole);
+        return UsuarioMapper.toDto(usuarioRepository.save(userToUpdate));
+    }
+
+    private LoginResponseDto buildLoginResponse(Usuario usuario) {
 
         // Generar token simple (en producción usar JWT)
         String token = UUID.randomUUID().toString();

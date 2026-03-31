@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RoleRepository extends JpaRepository<Role, Integer> {
     Optional<Role> findByNombre(String nombre);
+    Optional<Role> findByNombreIgnoreCase(String nombre);
 }
