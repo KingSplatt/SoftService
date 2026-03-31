@@ -56,10 +56,6 @@
     font-weight: 600;
     font-size: 0.9rem;
     white-space: nowrap;
-    display: none;
-}
-
-.contenedor-img.user-info:hover .usuario-nombre {
     display: inline;
 }
 
@@ -83,4 +79,22 @@
 
 .logout-button:active {
     transform: translateY(0);
+}
+
+.admin-button {
+    background-color: #1f8a4d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.admin-button:hover {
+    background-color: #166236;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(31, 138, 77, 0.35);
 }

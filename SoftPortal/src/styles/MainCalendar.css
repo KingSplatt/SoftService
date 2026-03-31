@@ -1,0 +1,75 @@
+.dashboard-main {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 16px 40px;
+}
+
+.welcome-card,
+.roles-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.welcome-card h1,
+.roles-card h2 {
+  margin-top: 0;
+  color: #202939;
+}
+
+.welcome-card p,
+.roles-card p {
+  margin-bottom: 0;
+  color: #4d5b74;
+}
+
+.roles-error {
+  margin-top: 16px;
+  margin-bottom: 16px;
+  background: #fbeaea;
+  border: 1px solid #ecb4b4;
+  color: #8b1f1f;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.roles-table-wrapper {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.roles-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.roles-table th,
+.roles-table td {
+  border-bottom: 1px solid #e7e7e7;
+  text-align: left;
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+.roles-table th {
+  color: #273048;
+  background: #f5f7fb;
+}
+
+.roles-table select {
+  width: 100%;
+  min-width: 130px;
+  padding: 8px 10px;
+  border: 1px solid #cfd6e4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+@media (max-width: 700px) {
+  .welcome-card,
+  .roles-card {
+    padding: 16px;
+  }
+}
