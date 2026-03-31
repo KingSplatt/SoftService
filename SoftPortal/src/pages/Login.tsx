@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import '../styles/Login.css';
 
@@ -9,11 +9,12 @@ export default function Login() {
   const [localError, setLocalError] = useState<string | null>(null);
   
   const navigate = useNavigate();
-  const { login, isLoading, error } = useAuth();
+  const { login, isLoading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
+    clearError();
 
     // Validación básica
     if (!email || !password) {
@@ -53,10 +54,10 @@ export default function Login() {
               id="email"
               type="email"
               placeholder="tu@email.com"
-              value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
                 setLocalError(null);
+                clearError();
               }}
               disabled={isLoading}
               autoComplete="email"
@@ -69,10 +70,10 @@ export default function Login() {
               id="password"
               type="password"
               placeholder="••••••••"
-              value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
                 setLocalError(null);
+                clearError();
               }}
               disabled={isLoading}
               autoComplete="current-password"
@@ -101,7 +102,9 @@ export default function Login() {
         </form>
 
         <div className="form-footer">
-          <p>¿No tienes cuenta? <a href="#register">Regístrate aquí</a></p>
+          <p>
+            ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
+          </p>
         </div>
       </div>
     </div>
