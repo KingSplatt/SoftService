@@ -1,38 +1,338 @@
 .dashboard-main {
-  max-width: 1100px;
-  margin: 30px auto;
-  padding: 0 16px 40px;
+  max-width: 1260px;
+  margin: 26px auto;
+  padding: 0 16px 48px;
 }
 
-.welcome-card,
-.roles-card {
-  background: white;
+.planner-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.calendar-panel,
+.employee-card,
+.roles-card,
+.info-card {
+  background: linear-gradient(160deg, #fffefb, #f6f8ff);
+  border: 1px solid #d9dfef;
+  border-radius: 18px;
+  box-shadow: 0 18px 36px rgba(29, 39, 58, 0.1);
+}
+
+.calendar-panel {
+  padding: 22px;
+}
+
+.planner-head h1 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+}
+
+.planner-head p {
+  margin: 0;
+  color: #4d5873;
+  line-height: 1.45;
+}
+
+.planner-kicker {
+  margin: 0;
+  color: #1259d8;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.calendar-toolbar {
+  margin-top: 18px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.calendar-toolbar button,
+.request-btn,
+.modal-actions button,
+.info-card,
+.day-cell {
+  font-family: inherit;
+}
+
+.calendar-toolbar button {
+  border: 1px solid #c6d2ef;
+  background: #edf2ff;
+  border-radius: 10px;
+  color: #17316b;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.calendar-grid-wrap {
+  margin-top: 12px;
+  border: 1px solid #d6def5;
   border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 14px;
+  background: radial-gradient(circle at 20% -30%, #d8e2ff 0, transparent 45%), #fff;
 }
 
-.welcome-card h1,
+.weekday-row,
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weekday-row {
+  margin-bottom: 8px;
+}
+
+.weekday-row span {
+  text-align: center;
+  color: #586386;
+  font-size: 0.81rem;
+  font-weight: 700;
+}
+
+.day-cell {
+  border: 1px solid transparent;
+  min-height: 44px;
+  border-radius: 11px;
+  background: #f8faff;
+  color: #1f2c4d;
+  cursor: pointer;
+  transition: transform 130ms ease, background-color 130ms ease;
+}
+
+.day-cell:hover {
+  transform: translateY(-1px);
+  background: #ecf3ff;
+}
+
+.day-cell.outside,
+.day-cell:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.day-cell.today {
+  border-color: #3981ff;
+}
+
+.day-cell.selected {
+  background: #1f5bcc;
+  color: #fff;
+  border-color: #1f5bcc;
+}
+
+.day-cell.occupied {
+  background: #ffe9e9;
+  color: #9b2f2f;
+  border-color: #f0b8b8;
+}
+
+.day-cell.mine {
+  background: #e8f7eb;
+  color: #166e2f;
+  border-color: #b7e6c3;
+}
+
+.calendar-legend {
+  margin-top: 14px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: #4d5873;
+  font-size: 0.88rem;
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.selected {
+  background: #1f5bcc;
+}
+
+.dot.occupied {
+  background: #e97f7f;
+}
+
+.dot.mine {
+  background: #3ca95c;
+}
+
+.selection-summary {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #edf3ff;
+}
+
+.selection-summary p {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.chips-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.date-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #c8d7f5;
+  color: #2f467d;
+  font-size: 0.82rem;
+}
+
+.request-btn {
+  width: 100%;
+  border: none;
+  background: linear-gradient(120deg, #0842a8, #1778f2);
+  color: #fff;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.request-btn:disabled {
+  background: #9fb0d4;
+  cursor: not-allowed;
+}
+
+.employee-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.employee-card {
+  padding: 20px;
+}
+
+.employee-card h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #1d2a4f;
+}
+
+.employee-field {
+  padding: 11px 0;
+  border-bottom: 1px solid #e4e9f7;
+}
+
+.employee-field:last-child {
+  border-bottom: none;
+}
+
+.employee-field span {
+  display: block;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5d6b90;
+}
+
+.employee-field strong {
+  display: block;
+  margin-top: 4px;
+  margin-bottom: 3px;
+  color: #1a2b58;
+}
+
+.employee-field p {
+  margin: 0;
+  color: #4d5873;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.info-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.info-card {
+  text-align: left;
+  padding: 14px;
+  border: 1px solid #ccd8f6;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  border-color: #5f88de;
+}
+
+.info-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #1d2a4f;
+}
+
+.info-card p {
+  margin: 0;
+  color: #4b5a7b;
+  font-size: 0.87rem;
+  line-height: 1.4;
+}
+
+.roles-card {
+  margin-top: 26px;
+  padding: 20px;
+}
+
 .roles-card h2 {
   margin-top: 0;
-  color: #202939;
 }
 
-.welcome-card p,
-.roles-card p {
-  margin-bottom: 0;
-  color: #4d5b74;
-}
-
-.roles-error {
-  margin-top: 16px;
-  margin-bottom: 16px;
-  background: #fbeaea;
-  border: 1px solid #ecb4b4;
-  color: #8b1f1f;
+.roles-error,
+.panel-error,
+.inline-error,
+.inline-success,
+.loading-text {
   border-radius: 8px;
   padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.roles-error,
+.panel-error,
+.inline-error {
+  color: #8b1f1f;
+  background: #ffecec;
+  border: 1px solid #ecb4b4;
+}
+
+.inline-success {
+  color: #185d2b;
+  background: #ebfaee;
+  border: 1px solid #b9e6c4;
+}
+
+.loading-text {
+  color: #334f8d;
+  background: #e8efff;
+  border: 1px solid #c4d4fa;
 }
 
 .roles-table-wrapper {
@@ -67,9 +367,100 @@
   background: #fff;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 16, 41, 0.6);
+  display: grid;
+  place-items: center;
+  z-index: 60;
+  padding: 16px;
+}
+
+.modal-card {
+  width: min(560px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #cfdbf7;
+  padding: 20px;
+  box-shadow: 0 24px 48px rgba(12, 26, 59, 0.28);
+}
+
+.modal-card h3 {
+  margin-top: 0;
+}
+
+.modal-card label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  color: #33466f;
+  font-weight: 600;
+}
+
+.modal-card select,
+.modal-card textarea {
+  width: 100%;
+  border: 1px solid #c8d5f1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-actions button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.btn-cancel {
+  background: #e8ecf6;
+  color: #29416e;
+}
+
+.btn-accept {
+  background: #1f5bcc;
+  color: #fff;
+}
+
+.info-modal p {
+  color: #465778;
+  line-height: 1.45;
+}
+
+@media (max-width: 980px) {
+  .planner-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
-  .welcome-card,
+  .calendar-panel,
+  .employee-card,
   .roles-card {
     padding: 16px;
+  }
+
+  .weekday-row,
+  .days-grid {
+    gap: 6px;
+  }
+
+  .day-cell {
+    min-height: 38px;
+  }
+
+  .info-cards-grid {
+    grid-template-columns: 1fr;
   }
 }

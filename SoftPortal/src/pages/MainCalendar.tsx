@@ -9,6 +9,8 @@ interface UsuarioItem {
   email: string;
   idRol: number;
   rolNombre: string;
+  diasDisponibles?: number;
+  fechaCreacion?: string;
 }
 
 interface RoleItem {
@@ -16,21 +18,316 @@ interface RoleItem {
   nombre: string;
 }
 
+interface SolicitudItem {
+  idSolicitud: number;
+  usuarioId: number;
+  usuarioNombre: string;
+  tipoId: number;
+  tipoNombre: string;
+  estadoId: number;
+  estadoNombre: string;
+  fechaInicio: string;
+  fechaFin: string;
+  motivo: string;
+  fechaSolicitud: string;
+}
+
+interface TipoPermisoItem {
+  idTipo: number;
+  nombre: string;
+}
+
+interface CalendarDay {
+  date: Date;
+  iso: string;
+  inCurrentMonth: boolean;
+}
+
 const API_BASE_URL = 'http://localhost:8080/api';
+const FALLBACK_PERMISO_TYPES: TipoPermisoItem[] = [
+  { idTipo: 1, nombre: 'Vacaciones' },
+  { idTipo: 2, nombre: 'Incapacidad' },
+  { idTipo: 3, nombre: 'Movilidad / Viaticos' },
+  { idTipo: 4, nombre: 'Otro' },
+];
+
+const MONTH_FORMATTER = new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' });
+
+function toIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function stripTime(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getDaysBetween(startIso: string, endIso: string): string[] {
+  const result: string[] = [];
+  const start = stripTime(new Date(startIso));
+  const end = stripTime(new Date(endIso));
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return result;
+  }
+
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    result.push(toIsoDate(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return result;
+}
+
+function getContractDaysBySeniority(fechaCreacion?: string, diasDisponibles?: number): number {
+  if (typeof diasDisponibles === 'number' && diasDisponibles > 0) {
+    return diasDisponibles;
+  }
+
+  if (!fechaCreacion) {
+    return 12;
+  }
+
+  const createdAt = new Date(fechaCreacion);
+  if (Number.isNaN(createdAt.getTime())) {
+    return 12;
+  }
+
+  const now = new Date();
+  let years = now.getFullYear() - createdAt.getFullYear();
+  const hasNotHadAnniversaryYet =
+    now.getMonth() < createdAt.getMonth() ||
+    (now.getMonth() === createdAt.getMonth() && now.getDate() < createdAt.getDate());
+
+  if (hasNotHadAnniversaryYet) {
+    years -= 1;
+  }
+
+  const serviceYear = Math.max(1, years + 1);
+
+  if (serviceYear <= 5) {
+    return 10 + serviceYear * 2;
+  }
+
+  if (serviceYear <= 10) {
+    return 20 + Math.floor((serviceYear - 5) / 2) * 2;
+  }
+
+  return 26;
+}
+
+function getCalendarDays(baseDate: Date): CalendarDay[] {
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const firstWeekDay = (firstDayOfMonth.getDay() + 6) % 7;
+
+  const days: CalendarDay[] = [];
+  const gridStartDate = new Date(year, month, 1 - firstWeekDay);
+
+  for (let index = 0; index < 42; index += 1) {
+    const cellDate = new Date(gridStartDate);
+    cellDate.setDate(gridStartDate.getDate() + index);
+    days.push({
+      date: cellDate,
+      iso: toIsoDate(cellDate),
+      inCurrentMonth: cellDate.getMonth() === month,
+    });
+  }
+
+  return days;
+}
+
+function getRoleDescription(roleName: string): string {
+  const role = roleName.toLowerCase();
+
+  if (role.includes('admin')) {
+    return 'Gestiona permisos, usuarios y validaciones criticas del portal.';
+  }
+
+  if (role.includes('rh') || role.includes('rrhh') || role.includes('human')) {
+    return 'Da seguimiento al bienestar del personal y a las politicas internas.';
+  }
+
+  if (role.includes('lider') || role.includes('manager')) {
+    return 'Coordina al equipo y mantiene la cobertura operativa del area.';
+  }
+
+  return 'Contribuye en operaciones y proyectos del area asignada.';
+}
 
 export default function MainCalendar() {
   const { user, isAdmin } = useAuth();
   const [showRoleManager, setShowRoleManager] = useState(false);
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([]);
+  const [usuariosCatalogo, setUsuariosCatalogo] = useState<UsuarioItem[]>([]);
   const [roles, setRoles] = useState<RoleItem[]>([]);
+  const [solicitudes, setSolicitudes] = useState<SolicitudItem[]>([]);
+  const [tiposPermiso, setTiposPermiso] = useState<TipoPermisoItem[]>(FALLBACK_PERMISO_TYPES);
+  const [employeeProfile, setEmployeeProfile] = useState<UsuarioItem | null>(null);
   const [adminError, setAdminError] = useState<string | null>(null);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
+  const [isDashboardLoading, setIsDashboardLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [viewDate, setViewDate] = useState(() => new Date());
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [selectedTypeId, setSelectedTypeId] = useState<number>(1);
+  const [motivo, setMotivo] = useState('');
+  const [activeInfoModal, setActiveInfoModal] = useState<string | null>(null);
 
   const roleMap = useMemo(() => {
     const map = new Map<number, string>();
     roles.forEach((role) => map.set(role.idRol, role.nombre));
     return map;
   }, [roles]);
+
+  const userByIdMap = useMemo(() => {
+    const map = new Map<number, UsuarioItem>();
+    usuariosCatalogo.forEach((item) => map.set(item.idUsuario, item));
+    return map;
+  }, [usuariosCatalogo]);
+
+  const today = useMemo(() => stripTime(new Date()), []);
+
+  const availableDays = useMemo(
+    () => getContractDaysBySeniority(employeeProfile?.fechaCreacion, employeeProfile?.diasDisponibles),
+    [employeeProfile],
+  );
+
+  const occupiedDaysByArea = useMemo(() => {
+    if (!user || !employeeProfile) {
+      return new Set<string>();
+    }
+
+    const currentRoleId = employeeProfile.idRol;
+    const occupied = new Set<string>();
+
+    solicitudes.forEach((solicitud) => {
+      if (solicitud.usuarioId === user.id) {
+        return;
+      }
+
+      const solicitudUsuario = userByIdMap.get(solicitud.usuarioId);
+      if (!solicitudUsuario || solicitudUsuario.idRol !== currentRoleId) {
+        return;
+      }
+
+      getDaysBetween(solicitud.fechaInicio, solicitud.fechaFin).forEach((day) => occupied.add(day));
+    });
+
+    return occupied;
+  }, [employeeProfile, solicitudes, user, userByIdMap]);
+
+  const myRequestedDays = useMemo(() => {
+    if (!user) {
+      return new Set<string>();
+    }
+
+    const taken = new Set<string>();
+    solicitudes
+      .filter((solicitud) => solicitud.usuarioId === user.id)
+      .forEach((solicitud) => {
+        getDaysBetween(solicitud.fechaInicio, solicitud.fechaFin).forEach((day) => taken.add(day));
+      });
+
+    return taken;
+  }, [solicitudes, user]);
+
+  const calendarDays = useMemo(() => getCalendarDays(viewDate), [viewDate]);
+
+  const monthLabel = useMemo(() => {
+    const label = MONTH_FORMATTER.format(viewDate);
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, [viewDate]);
+
+  const roleName = employeeProfile?.rolNombre || user?.rol_nombre || 'Colaborador';
+
+  const roleDescription = useMemo(() => getRoleDescription(roleName), [roleName]);
+
+  const selectedTypeName =
+    tiposPermiso.find((tipo) => tipo.idTipo === selectedTypeId)?.nombre || 'Solicitud';
+
+  const infoCards = useMemo(
+    () => [
+      {
+        id: 'vacaciones',
+        title: 'Vacaciones',
+        detail: `Tienes ${availableDays} dias disponibles en tu contrato actual.`,
+      },
+      {
+        id: 'incapacidad',
+        title: 'Incapacidad',
+        detail: 'Registra incapacidades medicas con evidencia y fechas exactas.',
+      },
+      {
+        id: 'movilidad',
+        title: 'Movilidad / Viaticos',
+        detail: 'Solicita movilidad por trabajo externo o gastos autorizados.',
+      },
+      {
+        id: 'actualizar',
+        title: 'Actualizar informacion',
+        detail: 'Mantiene tu perfil al dia para una gestion correcta de permisos.',
+      },
+    ],
+    [availableDays],
+  );
+
+  const activeCard = infoCards.find((card) => card.id === activeInfoModal);
+
+  const loadDashboardData = useCallback(async () => {
+    if (!user) {
+      return;
+    }
+
+    setIsDashboardLoading(true);
+    setDashboardError(null);
+
+    try {
+      const [profileResponse, solicitudesResponse, tiposResponse, usersResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/usuarios/${user.id}`),
+        fetch(`${API_BASE_URL}/solicitudes`),
+        fetch(`${API_BASE_URL}/tipos-permiso`),
+        fetch(`${API_BASE_URL}/usuarios`),
+      ]);
+
+      if (!profileResponse.ok || !solicitudesResponse.ok || !usersResponse.ok) {
+        throw new Error('No se pudo cargar la informacion del panel de permisos.');
+      }
+
+      const profileData = (await profileResponse.json()) as UsuarioItem;
+      const solicitudesData = (await solicitudesResponse.json()) as SolicitudItem[];
+      const usersData = (await usersResponse.json()) as UsuarioItem[];
+
+      setEmployeeProfile(profileData);
+      setSolicitudes(solicitudesData);
+      setUsuariosCatalogo(usersData);
+
+      if (tiposResponse.ok) {
+        const tiposData = (await tiposResponse.json()) as TipoPermisoItem[];
+        if (tiposData.length > 0) {
+          setTiposPermiso(tiposData);
+          setSelectedTypeId((current) => (tiposData.some((item) => item.idTipo === current) ? current : tiposData[0].idTipo));
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al cargar el dashboard';
+      setDashboardError(message);
+    } finally {
+      setIsDashboardLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void loadDashboardData();
+  }, [loadDashboardData]);
 
   const loadAdminData = useCallback(async () => {
     if (!isAdmin) {
@@ -105,16 +402,242 @@ export default function MainCalendar() {
     }
   };
 
+  const toggleDate = (dateIso: string, inCurrentMonth: boolean, isPast: boolean) => {
+    if (!inCurrentMonth || isPast || occupiedDaysByArea.has(dateIso) || myRequestedDays.has(dateIso)) {
+      return;
+    }
+
+    setSubmitSuccess(null);
+    setSubmitError(null);
+
+    setSelectedDates((previous) => {
+      if (previous.includes(dateIso)) {
+        return previous.filter((item) => item !== dateIso);
+      }
+
+      if (previous.length >= availableDays) {
+        setSubmitError(`Solo puedes preseleccionar hasta ${availableDays} dias de acuerdo con tu contrato.`);
+        return previous;
+      }
+
+      return [...previous, dateIso].sort((a, b) => a.localeCompare(b));
+    });
+  };
+
+  const submitSolicitud = async () => {
+    if (!user || selectedDates.length === 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(null);
+
+    try {
+      await Promise.all(
+        selectedDates.map((dateIso) =>
+          fetch(`${API_BASE_URL}/solicitudes`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              usuarioId: user.id,
+              tipoId: selectedTypeId,
+              estadoId: 1,
+              fechaInicio: dateIso,
+              fechaFin: dateIso,
+              motivo: motivo.trim() || `Solicitud de ${selectedTypeName}`,
+            }),
+          }).then((response) => {
+            if (!response.ok) {
+              throw new Error('No se pudo registrar la solicitud.');
+            }
+            return response;
+          }),
+        ),
+      );
+
+      setSubmitSuccess('Solicitud enviada correctamente.');
+      setSelectedDates([]);
+      setMotivo('');
+      setShowRequestModal(false);
+      await loadDashboardData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar la solicitud.';
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const selectedDateLabels = useMemo(
+    () =>
+      selectedDates.map((dateIso) =>
+        new Intl.DateTimeFormat('es-MX', {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }).format(new Date(`${dateIso}T00:00:00`)),
+      ),
+    [selectedDates],
+  );
+
+  const birthdayLabel = 'No registrada en perfil';
+
   return (
     <>
       <Header onManageRolesClick={() => setShowRoleManager((prev) => !prev)} />
 
       <main className="dashboard-main">
-        <section className="welcome-card">
-          <h1>Bienvenido a SoftPortal</h1>
-          <p>
-            Esta es tu pagina exclusiva, <strong>{user?.nombre_usuario || 'usuario'}</strong>.
-          </p>
+        <section className="planner-layout">
+          <article className="calendar-panel">
+            <header className="planner-head">
+              <p className="planner-kicker">Planeacion de ausencias</p>
+              <h1>{monthLabel}</h1>
+              <p>
+                Selecciona los dias que deseas solicitar. El sistema bloquea automaticamente los dias ya
+                ocupados por colaboradores de tu misma area.
+              </p>
+            </header>
+
+            <div className="calendar-toolbar">
+              <button
+                type="button"
+                onClick={() => setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+              >
+                Mes anterior
+              </button>
+              <button type="button" onClick={() => setViewDate(new Date())}>
+                Hoy
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+              >
+                Mes siguiente
+              </button>
+            </div>
+
+            {dashboardError && <div className="panel-error">{dashboardError}</div>}
+
+            <div className="calendar-grid-wrap">
+              <div className="weekday-row">
+                {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((day) => (
+                  <span key={day}>{day}</span>
+                ))}
+              </div>
+
+              <div className="days-grid">
+                {calendarDays.map((dayCell) => {
+                  const isPast = dayCell.date < today;
+                  const isSelected = selectedDates.includes(dayCell.iso);
+                  const isOccupied = occupiedDaysByArea.has(dayCell.iso);
+                  const isMine = myRequestedDays.has(dayCell.iso);
+                  const isToday = dayCell.iso === toIsoDate(today);
+
+                  return (
+                    <button
+                      key={dayCell.iso}
+                      type="button"
+                      className={[
+                        'day-cell',
+                        dayCell.inCurrentMonth ? '' : 'outside',
+                        isToday ? 'today' : '',
+                        isSelected ? 'selected' : '',
+                        isOccupied ? 'occupied' : '',
+                        isMine ? 'mine' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => toggleDate(dayCell.iso, dayCell.inCurrentMonth, isPast)}
+                      disabled={!dayCell.inCurrentMonth || isPast || isOccupied || isMine}
+                      title={
+                        isMine
+                          ? 'Ya tienes una solicitud en este dia'
+                          : isOccupied
+                            ? 'Dia ocupado por el area'
+                            : `Seleccionar ${dayCell.iso}`
+                      }
+                    >
+                      {dayCell.date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="calendar-legend">
+              <span>
+                <i className="dot selected"></i> Seleccionado
+              </span>
+              <span>
+                <i className="dot occupied"></i> Ocupado area
+              </span>
+              <span>
+                <i className="dot mine"></i> Ya solicitado
+              </span>
+            </div>
+
+            <div className="selection-summary">
+              <p>
+                Dias seleccionados: <strong>{selectedDates.length}</strong> / {availableDays}
+              </p>
+              {selectedDateLabels.length > 0 && (
+                <div className="chips-list">
+                  {selectedDateLabels.map((label) => (
+                    <span key={label} className="date-chip">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                className="request-btn"
+                disabled={selectedDates.length === 0}
+                onClick={() => setShowRequestModal(true)}
+              >
+                Continuar con solicitud
+              </button>
+              {submitError && <p className="inline-error">{submitError}</p>}
+              {submitSuccess && <p className="inline-success">{submitSuccess}</p>}
+              {isDashboardLoading && <p className="loading-text">Actualizando informacion...</p>}
+            </div>
+          </article>
+
+          <aside className="employee-panel">
+            <div className="employee-card">
+              <h2>Informacion del empleado</h2>
+              <div className="employee-field">
+                <span>Rol</span>
+                <strong>{roleName}</strong>
+                <p>{roleDescription}</p>
+              </div>
+              <div className="employee-field">
+                <span>Nombre</span>
+                <strong>{employeeProfile?.nombreUsuario || user?.nombre_usuario || 'Sin nombre'}</strong>
+              </div>
+              <div className="employee-field">
+                <span>Fecha de cumpleaños</span>
+                <strong>{birthdayLabel}</strong>
+              </div>
+              <div className="employee-field">
+                <span>Dias de vacaciones disponibles</span>
+                <strong>{availableDays} dias</strong>
+              </div>
+            </div>
+
+            <div className="info-cards-grid">
+              {infoCards.map((card) => (
+                <button key={card.id} type="button" className="info-card" onClick={() => setActiveInfoModal(card.id)}>
+                  <h3>{card.title}</h3>
+                  <p>{card.detail}</p>
+                </button>
+              ))}
+            </div>
+          </aside>
         </section>
 
         {isAdmin && showRoleManager && (
@@ -162,6 +685,70 @@ export default function MainCalendar() {
               </div>
             )}
           </section>
+        )}
+
+        {showRequestModal && (
+          <div className="modal-overlay" role="dialog" aria-modal="true">
+            <div className="modal-card">
+              <h3>Confirmar tipo de solicitud</h3>
+              <p>
+                Se solicitaran <strong>{selectedDates.length}</strong> dias. Selecciona el tipo y confirma.
+              </p>
+
+              <label htmlFor="tipoSolicitud">Tipo de permiso</label>
+              <select
+                id="tipoSolicitud"
+                value={selectedTypeId}
+                onChange={(event) => setSelectedTypeId(Number(event.target.value))}
+              >
+                {tiposPermiso.map((tipo) => (
+                  <option key={tipo.idTipo} value={tipo.idTipo}>
+                    {tipo.nombre}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="motivoSolicitud">Motivo (opcional)</label>
+              <textarea
+                id="motivoSolicitud"
+                rows={3}
+                value={motivo}
+                onChange={(event) => setMotivo(event.target.value)}
+                placeholder="Agrega una nota para tu lider o RH"
+              />
+
+              <div className="modal-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowRequestModal(false)}>
+                  Cancelar
+                </button>
+                <button type="button" className="btn-accept" onClick={() => void submitSolicitud()} disabled={isSubmitting}>
+                  {isSubmitting ? 'Enviando...' : 'Aceptar solicitud'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeCard && (
+          <div className="modal-overlay" role="dialog" aria-modal="true">
+            <div className="modal-card info-modal">
+              <h3>{activeCard.title}</h3>
+              <p>
+                Hola {employeeProfile?.nombreUsuario || user?.nombre_usuario || 'colaborador'}, esta seccion
+                detalla las reglas y pasos para <strong>{activeCard.title}</strong> segun tu perfil actual.
+              </p>
+              <p>{activeCard.detail}</p>
+              <p>
+                Para mayor control del area, tus solicitudes pasan a revision y se comparan con dias ya
+                ocupados del equipo.
+              </p>
+              <div className="modal-actions">
+                <button type="button" className="btn-accept" onClick={() => setActiveInfoModal(null)}>
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </>
