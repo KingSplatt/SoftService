@@ -64,6 +64,12 @@ function stripTime(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function addYears(date: Date, years: number): Date {
+  const result = new Date(date);
+  result.setFullYear(result.getFullYear() + years);
+  return result;
+}
+
 function getDaysBetween(startIso: string, endIso: string): string[] {
   const result: string[] = [];
   const start = stripTime(new Date(startIso));
@@ -82,41 +88,61 @@ function getDaysBetween(startIso: string, endIso: string): string[] {
   return result;
 }
 
-function getContractDaysBySeniority(fechaCreacion?: string, diasDisponibles?: number): number {
-  if (typeof diasDisponibles === 'number' && diasDisponibles > 0) {
-    return diasDisponibles;
-  }
-
+function getServiceYearInfo(fechaCreacion?: string, referenceDate = new Date()) {
   if (!fechaCreacion) {
-    return 12;
+    return {
+      serviceYear: 1,
+      cycleStart: null as Date | null,
+      cycleEnd: null as Date | null,
+      entitlementDays: 12,
+    };
   }
 
   const createdAt = new Date(fechaCreacion);
   if (Number.isNaN(createdAt.getTime())) {
-    return 12;
+    return {
+      serviceYear: 1,
+      cycleStart: null as Date | null,
+      cycleEnd: null as Date | null,
+      entitlementDays: 12,
+    };
   }
 
-  const now = new Date();
-  let years = now.getFullYear() - createdAt.getFullYear();
-  const hasNotHadAnniversaryYet =
-    now.getMonth() < createdAt.getMonth() ||
-    (now.getMonth() === createdAt.getMonth() && now.getDate() < createdAt.getDate());
+  const today = stripTime(referenceDate);
+  const anniversaryThisYear = new Date(today.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+  const hasHadAnniversary = today >= anniversaryThisYear;
+  const serviceYear = hasHadAnniversary ? today.getFullYear() - createdAt.getFullYear() + 1 : today.getFullYear() - createdAt.getFullYear();
+  const normalizedServiceYear = Math.max(1, serviceYear);
+  const cycleStart = hasHadAnniversary ? anniversaryThisYear : addYears(anniversaryThisYear, -1);
+  const cycleEnd = addYears(cycleStart, 1);
 
-  if (hasNotHadAnniversaryYet) {
-    years -= 1;
+  return {
+    serviceYear: normalizedServiceYear,
+    cycleStart,
+    cycleEnd,
+    entitlementDays: 12 + (normalizedServiceYear - 1) * 2,
+  };
+}
+
+function countDaysWithinRange(startIso: string, endIso: string, rangeStart: Date | null, rangeEnd: Date | null): number {
+  if (!rangeStart || !rangeEnd) {
+    return getDaysBetween(startIso, endIso).length;
   }
 
-  const serviceYear = Math.max(1, years + 1);
-
-  if (serviceYear <= 5) {
-    return 10 + serviceYear * 2;
+  const start = stripTime(new Date(startIso));
+  const end = stripTime(new Date(endIso));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return 0;
   }
 
-  if (serviceYear <= 10) {
-    return 20 + Math.floor((serviceYear - 5) / 2) * 2;
+  const effectiveStart = start > rangeStart ? start : rangeStart;
+  const effectiveEnd = end < rangeEnd ? end : rangeEnd;
+
+  if (effectiveStart > effectiveEnd) {
+    return 0;
   }
 
-  return 26;
+  return getDaysBetween(toIsoDate(effectiveStart), toIsoDate(effectiveEnd)).length;
 }
 
 function getCalendarDays(baseDate: Date): CalendarDay[] {
@@ -196,10 +222,16 @@ export default function MainCalendar() {
 
   const today = useMemo(() => stripTime(new Date()), []);
 
-  const availableDays = useMemo(
-    () => getContractDaysBySeniority(employeeProfile?.fechaCreacion, employeeProfile?.diasDisponibles),
-    [employeeProfile],
+  const contractInfo = useMemo(
+    () => getServiceYearInfo(employeeProfile?.fechaCreacion),
+    [employeeProfile?.fechaCreacion],
   );
+
+  const contractDays = employeeProfile?.fechaCreacion
+    ? contractInfo.entitlementDays
+    : employeeProfile?.diasDisponibles && employeeProfile.diasDisponibles > 0
+      ? employeeProfile.diasDisponibles
+      : 12;
 
   const occupiedDaysByArea = useMemo(() => {
     if (!user || !employeeProfile) {
@@ -240,6 +272,22 @@ export default function MainCalendar() {
     return taken;
   }, [solicitudes, user]);
 
+  const spentDaysThisCycle = useMemo(() => {
+    if (!user) {
+      return 0;
+    }
+
+    return solicitudes
+      .filter((solicitud) => solicitud.usuarioId === user.id)
+      .reduce((total, solicitud) => {
+        return total + countDaysWithinRange(solicitud.fechaInicio, solicitud.fechaFin, contractInfo.cycleStart, contractInfo.cycleEnd);
+      }, 0);
+  }, [contractInfo.cycleEnd, contractInfo.cycleStart, solicitudes, user]);
+
+  const selectedDaysCount = selectedDates.length;
+
+  const remainingDays = Math.max(0, contractDays - spentDaysThisCycle - selectedDaysCount);
+
   const calendarDays = useMemo(() => getCalendarDays(viewDate), [viewDate]);
 
   const monthLabel = useMemo(() => {
@@ -259,25 +307,25 @@ export default function MainCalendar() {
       {
         id: 'vacaciones',
         title: 'Vacaciones',
-        detail: `Tienes ${availableDays} dias disponibles en tu contrato actual.`,
+        detail: `Te quedan ${remainingDays} dias disponibles este ciclo. Ya consumiste ${spentDaysThisCycle} y hay ${selectedDaysCount} en seleccion pendiente.`,
       },
       {
         id: 'incapacidad',
         title: 'Incapacidad',
-        detail: 'Registra incapacidades medicas con evidencia y fechas exactas.',
+        detail: `Registra incapacidades medicas con evidencia y fechas exactas. Disponibilidad actual: ${remainingDays} dias.`,
       },
       {
         id: 'movilidad',
         title: 'Movilidad / Viaticos',
-        detail: 'Solicita movilidad por trabajo externo o gastos autorizados.',
+        detail: `Solicita movilidad por trabajo externo o gastos autorizados. Disponibilidad actual: ${remainingDays} dias.`,
       },
       {
         id: 'actualizar',
         title: 'Actualizar informacion',
-        detail: 'Mantiene tu perfil al dia para una gestion correcta de permisos.',
+        detail: `Mantiene tu perfil al dia para una gestion correcta de permisos. Este ciclo corresponde al ${contractInfo.serviceYear}º año de servicio.`,
       },
     ],
-    [availableDays],
+    [contractInfo.serviceYear, remainingDays, selectedDaysCount, spentDaysThisCycle],
   );
 
   const activeCard = infoCards.find((card) => card.id === activeInfoModal);
@@ -415,8 +463,13 @@ export default function MainCalendar() {
         return previous.filter((item) => item !== dateIso);
       }
 
-      if (previous.length >= availableDays) {
-        setSubmitError(`Solo puedes preseleccionar hasta ${availableDays} dias de acuerdo con tu contrato.`);
+      if (remainingDays <= 0) {
+        setSubmitError('No tienes dias disponibles para seleccionar en este ciclo.');
+        return previous;
+      }
+
+      if (previous.length >= remainingDays) {
+        setSubmitError(`Solo puedes preseleccionar hasta ${remainingDays} dias con tu saldo actual.`);
         return previous;
       }
 
@@ -483,8 +536,6 @@ export default function MainCalendar() {
       ),
     [selectedDates],
   );
-
-  const birthdayLabel = 'No registrada en perfil';
 
   return (
     <>
@@ -582,7 +633,10 @@ export default function MainCalendar() {
 
             <div className="selection-summary">
               <p>
-                Dias seleccionados: <strong>{selectedDates.length}</strong> / {availableDays}
+                Dias seleccionados: <strong>{selectedDaysCount}</strong>
+              </p>
+              <p>
+                Dias disponibles ahora: <strong>{remainingDays}</strong> / {contractDays}
               </p>
               {selectedDateLabels.length > 0 && (
                 <div className="chips-list">
@@ -620,12 +674,20 @@ export default function MainCalendar() {
                 <strong>{employeeProfile?.nombreUsuario || user?.nombre_usuario || 'Sin nombre'}</strong>
               </div>
               <div className="employee-field">
-                <span>Fecha de cumpleaños</span>
-                <strong>{birthdayLabel}</strong>
+                <span>Dias de vacaciones disponibles</span>
+                <strong>{remainingDays} dias</strong>
               </div>
               <div className="employee-field">
-                <span>Dias de vacaciones disponibles</span>
-                <strong>{availableDays} dias</strong>
+                <span>Dias usados en el ciclo actual</span>
+                <strong>{spentDaysThisCycle} dias</strong>
+              </div>
+              <div className="employee-field">
+                <span>Dias del ciclo actual</span>
+                <strong>{contractDays} dias</strong>
+              </div>
+              <div className="employee-field">
+                <span>Año de servicio</span>
+                <strong>{contractInfo.serviceYear}º año</strong>
               </div>
             </div>
 
