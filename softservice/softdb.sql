@@ -46,3 +46,39 @@ INSERT INTO estados_solicitud (nombre) VALUES ('pendiente'), ('aprobado'), ('rec
 -- Usuario Admin
 INSERT INTO usuarios (nombre_usuario, email, password_hash, id_rol, dias_disponibles)
 VALUES ('admin', 'admin@softtek.com', '123', 1, 0);
+
+-- some queries
+
+SELECT 
+    u.nombre_usuario, 
+    tp.nombre AS tipo, 
+    es.nombre AS estado, 
+    s.fecha_inicio, 
+    s.motivo
+FROM solicitudes s
+JOIN usuarios u ON s.usuario_id = u.id_usuario
+JOIN tipos_permiso tp ON s.tipo_id = tp.id_tipo
+JOIN estados_solicitud es ON s.estado_id = es.id_estado;
+
+select * from roles;
+
+insert into roles (id_rol, nombre) values
+('3','Application Support Engineer'),
+('4','Service Manager'),
+('5','Release Manager'),
+('6','Developer'),
+('7','Entry Level')
+
+select * from tipos_permiso;
+
+update tipos_permiso set nombre = 'home office' where id_tipo =4
+
+update usuarios set id_rol = 3 where id_usuario = 2;
+delete from solicitudes where usuario_id = 2;
+
+INSERT INTO usuarios (nombre_usuario, email, password_hash, id_rol, dias_disponibles)
+VALUES 
+('Roberto Méndez', 'roberto.mendez@softtek.com', 'Disneyxa1', 2, 16),
+('Beatriz Soto', 'beatriz.soto@softtek.com', 'Disneyxa1', 2, 18),
+('Ricardo Luna', 'ricardo.luna@softtek.com', 'Disneyxa1', 2, 14),
+('Sofía Valenzuela', 'sofia.valenzuela@softtek.com', 'Disneyxa1', 2, 16);

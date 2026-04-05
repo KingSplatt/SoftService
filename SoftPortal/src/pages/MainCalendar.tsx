@@ -64,6 +64,15 @@ function stripTime(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function parseLocalDate(dateIso: string): Date {
+  const [year, month, day] = dateIso.split('-').map(Number);
+  if (!year || !month || !day) {
+    return new Date(dateIso);
+  }
+
+  return new Date(year, month - 1, day);
+}
+
 function addYears(date: Date, years: number): Date {
   const result = new Date(date);
   result.setFullYear(result.getFullYear() + years);
@@ -72,8 +81,8 @@ function addYears(date: Date, years: number): Date {
 
 function getDaysBetween(startIso: string, endIso: string): string[] {
   const result: string[] = [];
-  const start = stripTime(new Date(startIso));
-  const end = stripTime(new Date(endIso));
+  const start = stripTime(parseLocalDate(startIso));
+  const end = stripTime(parseLocalDate(endIso));
 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
     return result;
@@ -129,8 +138,8 @@ function countDaysWithinRange(startIso: string, endIso: string, rangeStart: Date
     return getDaysBetween(startIso, endIso).length;
   }
 
-  const start = stripTime(new Date(startIso));
-  const end = stripTime(new Date(endIso));
+  const start = stripTime(parseLocalDate(startIso));
+  const end = stripTime(parseLocalDate(endIso));
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
     return 0;
   }
@@ -532,7 +541,7 @@ export default function MainCalendar() {
           day: '2-digit',
           month: 'short',
           year: 'numeric',
-        }).format(new Date(`${dateIso}T00:00:00`)),
+        }).format(parseLocalDate(dateIso)),
       ),
     [selectedDates],
   );
