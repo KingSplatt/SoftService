@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SolicitudRepository extends JpaRepository<Solicitud, Integer> {
     List<Solicitud> findByUsuarioIdUsuario(Integer idUsuario);
+
+    List<Solicitud> findByUsuarioNombreUsuarioContainingIgnoreCase(String nombreUsuario);
 }

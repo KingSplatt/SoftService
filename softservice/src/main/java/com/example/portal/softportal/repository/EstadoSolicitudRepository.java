@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EstadoSolicitudRepository extends JpaRepository<EstadoSolicitud, Integer> {
     Optional<EstadoSolicitud> findByNombre(String nombre);
+
+    Optional<EstadoSolicitud> findByNombreIgnoreCase(String nombre);
 }

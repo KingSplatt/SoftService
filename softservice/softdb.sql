@@ -39,7 +39,7 @@ CREATE TABLE solicitudes (
 );
 
 -- Datos Iniciales
-INSERT INTO roles (nombre) VALUES ('admin'), ('user');
+INSERT INTO roles (nombre) VALUES ('admin'), ('user'), ('Recursos Humanos');
 INSERT INTO tipos_permiso (nombre) VALUES ('vacaciones'), ('enfermedad'), ('tramites'), ('homeoffice');
 INSERT INTO estados_solicitud (nombre) VALUES ('pendiente'), ('aprobado'), ('rechazado');
 

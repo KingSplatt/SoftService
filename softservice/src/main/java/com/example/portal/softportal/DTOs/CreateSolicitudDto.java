@@ -19,7 +19,6 @@ public class CreateSolicitudDto {
     @NotNull
     private Integer tipoId;
 
-    @NotNull
     private Integer estadoId;
 
     @NotNull
