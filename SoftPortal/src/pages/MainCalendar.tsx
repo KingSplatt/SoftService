@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { useAuth } from '../hooks/useAuth';
 import '../styles/MainCalendar.css';
@@ -11,11 +12,6 @@ interface UsuarioItem {
   rolNombre: string;
   diasDisponibles?: number;
   fechaCreacion?: string;
-}
-
-interface RoleItem {
-  idRol: number;
-  nombre: string;
 }
 
 interface SolicitudItem {
@@ -195,19 +191,15 @@ function getRoleDescription(roleName: string): string {
 }
 
 export default function MainCalendar() {
-  const { user, isAdmin } = useAuth();
-  const [showRoleManager, setShowRoleManager] = useState(false);
-  const [usuarios, setUsuarios] = useState<UsuarioItem[]>([]);
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [usuariosCatalogo, setUsuariosCatalogo] = useState<UsuarioItem[]>([]);
-  const [roles, setRoles] = useState<RoleItem[]>([]);
   const [solicitudes, setSolicitudes] = useState<SolicitudItem[]>([]);
   const [tiposPermiso, setTiposPermiso] = useState<TipoPermisoItem[]>(FALLBACK_PERMISO_TYPES);
   const [employeeProfile, setEmployeeProfile] = useState<UsuarioItem | null>(null);
-  const [adminError, setAdminError] = useState<string | null>(null);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
-  const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -216,12 +208,6 @@ export default function MainCalendar() {
   const [selectedTypeId, setSelectedTypeId] = useState<number>(1);
   const [motivo, setMotivo] = useState('');
   const [activeInfoModal, setActiveInfoModal] = useState<string | null>(null);
-
-  const roleMap = useMemo(() => {
-    const map = new Map<number, string>();
-    roles.forEach((role) => map.set(role.idRol, role.nombre));
-    return map;
-  }, [roles]);
 
   const userByIdMap = useMemo(() => {
     const map = new Map<number, UsuarioItem>();
@@ -260,25 +246,49 @@ export default function MainCalendar() {
         return;
       }
 
+      const normalizedStatus = (solicitud.estadoNombre || '').trim().toLowerCase();
+      if (normalizedStatus.includes('rechaz')) {
+        return;
+      }
+
       getDaysBetween(solicitud.fechaInicio, solicitud.fechaFin).forEach((day) => occupied.add(day));
     });
 
     return occupied;
   }, [employeeProfile, solicitudes, user, userByIdMap]);
 
-  const myRequestedDays = useMemo(() => {
+  const myRequestStatusByDay = useMemo(() => {
     if (!user) {
-      return new Set<string>();
+      return new Map<string, 'pendiente' | 'aprobado' | 'rechazado'>();
     }
 
-    const taken = new Set<string>();
+    const statusRank: Record<'pendiente' | 'aprobado' | 'rechazado', number> = {
+      pendiente: 3,
+      aprobado: 2,
+      rechazado: 1,
+    };
+
+    const map = new Map<string, 'pendiente' | 'aprobado' | 'rechazado'>();
     solicitudes
       .filter((solicitud) => solicitud.usuarioId === user.id)
       .forEach((solicitud) => {
-        getDaysBetween(solicitud.fechaInicio, solicitud.fechaFin).forEach((day) => taken.add(day));
+        const normalized = (solicitud.estadoNombre || '').trim().toLowerCase();
+        const status: 'pendiente' | 'aprobado' | 'rechazado' =
+          normalized.includes('aprob')
+            ? 'aprobado'
+            : normalized.includes('rechaz')
+              ? 'rechazado'
+              : 'pendiente';
+
+        getDaysBetween(solicitud.fechaInicio, solicitud.fechaFin).forEach((day) => {
+          const current = map.get(day);
+          if (!current || statusRank[status] > statusRank[current]) {
+            map.set(day, status);
+          }
+        });
       });
 
-    return taken;
+    return map;
   }, [solicitudes, user]);
 
   const spentDaysThisCycle = useMemo(() => {
@@ -386,81 +396,11 @@ export default function MainCalendar() {
     void loadDashboardData();
   }, [loadDashboardData]);
 
-  const loadAdminData = useCallback(async () => {
-    if (!isAdmin) {
-      return;
-    }
-
-    setIsAdminLoading(true);
-    setAdminError(null);
-
-    try {
-      const [usuariosResponse, rolesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/usuarios`),
-        fetch(`${API_BASE_URL}/roles`),
-      ]);
-
-      if (!usuariosResponse.ok || !rolesResponse.ok) {
-        throw new Error('No se pudieron cargar usuarios y roles');
-      }
-
-      const usuariosData = (await usuariosResponse.json()) as UsuarioItem[];
-      const rolesData = (await rolesResponse.json()) as RoleItem[];
-
-      setUsuarios(usuariosData);
-      setRoles(rolesData);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error de carga';
-      setAdminError(message);
-    } finally {
-      setIsAdminLoading(false);
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
-    if (showRoleManager) {
-      void loadAdminData();
-    }
-  }, [showRoleManager, loadAdminData]);
-
-  const handleRoleChange = async (targetUserId: number, newRoleId: number) => {
-    if (!user) {
-      return;
-    }
-
-    setAdminError(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${targetUserId}/rol`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idRol: newRoleId,
-          adminUserId: user.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('No se pudo actualizar el rol');
-      }
-
-      setUsuarios((prev) =>
-        prev.map((u) =>
-          u.idUsuario === targetUserId
-            ? { ...u, idRol: newRoleId, rolNombre: roleMap.get(newRoleId) || u.rolNombre }
-            : u,
-        ),
-      );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error al actualizar rol';
-      setAdminError(message);
-    }
-  };
-
   const toggleDate = (dateIso: string, inCurrentMonth: boolean, isPast: boolean) => {
-    if (!inCurrentMonth || isPast || occupiedDaysByArea.has(dateIso) || myRequestedDays.has(dateIso)) {
+    const myStatus = myRequestStatusByDay.get(dateIso);
+    const hasBlockingStatus = myStatus === 'pendiente' || myStatus === 'aprobado';
+
+    if (!inCurrentMonth || isPast || occupiedDaysByArea.has(dateIso) || hasBlockingStatus) {
       return;
     }
 
@@ -520,7 +460,7 @@ export default function MainCalendar() {
         ),
       );
 
-      setSubmitSuccess('Solicitud enviada correctamente.');
+      setSubmitSuccess('Solicitud enviada y registrada como pendiente de aprobacion por RH.');
       setSelectedDates([]);
       setMotivo('');
       setShowRequestModal(false);
@@ -546,9 +486,25 @@ export default function MainCalendar() {
     [selectedDates],
   );
 
+  const calendarLegend = useMemo(
+    () => [
+      { key: 'selected', label: 'Seleccionado', className: 'selected' },
+      { key: 'occupied', label: 'Ocupado area', className: 'occupied' },
+      { key: 'pending', label: 'Mi solicitud pendiente', className: 'mine-pending' },
+      { key: 'approved', label: 'Mi solicitud aprobada', className: 'mine-approved' },
+      { key: 'rejected', label: 'Mi solicitud rechazada', className: 'mine-rejected' },
+    ],
+    [],
+  );
+
   return (
     <>
-      <Header onManageRolesClick={() => setShowRoleManager((prev) => !prev)} />
+      <Header
+        onManageRolesClick={() => navigate('/gestion-roles')}
+        onOpenMyRequestsClick={() => navigate('/mis-solicitudes')}
+        onOpenRequestsClick={() => navigate('/solicitudes-gestion')}
+        onOpenReportsClick={() => navigate('/reportes-solicitudes')}
+      />
 
       <main className="dashboard-main">
         <section className="planner-layout">
@@ -594,8 +550,9 @@ export default function MainCalendar() {
                   const isPast = dayCell.date < today;
                   const isSelected = selectedDates.includes(dayCell.iso);
                   const isOccupied = occupiedDaysByArea.has(dayCell.iso);
-                  const isMine = myRequestedDays.has(dayCell.iso);
+                  const myStatus = myRequestStatusByDay.get(dayCell.iso);
                   const isToday = dayCell.iso === toIsoDate(today);
+                  const isMineBlocking = myStatus === 'pendiente' || myStatus === 'aprobado';
 
                   return (
                     <button
@@ -607,15 +564,19 @@ export default function MainCalendar() {
                         isToday ? 'today' : '',
                         isSelected ? 'selected' : '',
                         isOccupied ? 'occupied' : '',
-                        isMine ? 'mine' : '',
+                        myStatus ? `mine-${myStatus}` : '',
                       ]
                         .filter(Boolean)
                         .join(' ')}
                       onClick={() => toggleDate(dayCell.iso, dayCell.inCurrentMonth, isPast)}
-                      disabled={!dayCell.inCurrentMonth || isPast || isOccupied || isMine}
+                      disabled={!dayCell.inCurrentMonth || isPast || isOccupied || isMineBlocking}
                       title={
-                        isMine
-                          ? 'Ya tienes una solicitud en este dia'
+                        myStatus === 'aprobado'
+                          ? 'Tienes una solicitud aprobada en este dia'
+                          : myStatus === 'pendiente'
+                            ? 'Tienes una solicitud pendiente en este dia'
+                            : myStatus === 'rechazado'
+                              ? 'Solicitud rechazada anteriormente, puedes volver a solicitar'
                           : isOccupied
                             ? 'Dia ocupado por el area'
                             : `Seleccionar ${dayCell.iso}`
@@ -629,15 +590,11 @@ export default function MainCalendar() {
             </div>
 
             <div className="calendar-legend">
-              <span>
-                <i className="dot selected"></i> Seleccionado
-              </span>
-              <span>
-                <i className="dot occupied"></i> Ocupado area
-              </span>
-              <span>
-                <i className="dot mine"></i> Ya solicitado
-              </span>
+              {calendarLegend.map((item) => (
+                <span key={item.key}>
+                  <i className={`dot ${item.className}`}></i> {item.label}
+                </span>
+              ))}
             </div>
 
             <div className="selection-summary">
@@ -663,6 +620,9 @@ export default function MainCalendar() {
                 onClick={() => setShowRequestModal(true)}
               >
                 Continuar con solicitud
+              </button>
+              <button type="button" className="request-btn secondary" onClick={() => navigate('/mis-solicitudes')}>
+                Ver mis solicitudes y estatus
               </button>
               {submitError && <p className="inline-error">{submitError}</p>}
               {submitSuccess && <p className="inline-success">{submitSuccess}</p>}
@@ -710,53 +670,6 @@ export default function MainCalendar() {
             </div>
           </aside>
         </section>
-
-        {isAdmin && showRoleManager && (
-          <section className="roles-card">
-            <h2>Gestionar roles</h2>
-            <p>Solo los administradores pueden ver y editar esta seccion.</p>
-
-            {adminError && <div className="roles-error">{adminError}</div>}
-
-            {isAdminLoading ? (
-              <p>Cargando usuarios y roles...</p>
-            ) : (
-              <div className="roles-table-wrapper">
-                <table className="roles-table">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Email</th>
-                      <th>Rol actual</th>
-                      <th>Asignar rol</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usuarios.map((usuario) => (
-                      <tr key={usuario.idUsuario}>
-                        <td>{usuario.nombreUsuario}</td>
-                        <td>{usuario.email}</td>
-                        <td>{usuario.rolNombre}</td>
-                        <td>
-                          <select
-                            value={usuario.idRol}
-                            onChange={(e) => void handleRoleChange(usuario.idUsuario, Number(e.target.value))}
-                          >
-                            {roles.map((role) => (
-                              <option key={role.idRol} value={role.idRol}>
-                                {role.nombre}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        )}
 
         {showRequestModal && (
           <div className="modal-overlay" role="dialog" aria-modal="true">
