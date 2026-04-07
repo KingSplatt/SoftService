@@ -133,10 +133,22 @@
   border-color: #f0b8b8;
 }
 
-.day-cell.mine {
+.day-cell.mine-pendiente {
+  background: #fff3db;
+  color: #925b02;
+  border-color: #efd8a8;
+}
+
+.day-cell.mine-aprobado {
   background: #e8f7eb;
   color: #166e2f;
   border-color: #b7e6c3;
+}
+
+.day-cell.mine-rechazado {
+  background: #ffe9e9;
+  color: #9b2f2f;
+  border-color: #f0b8b8;
 }
 
 .calendar-legend {
@@ -169,8 +181,16 @@
   background: #e97f7f;
 }
 
-.dot.mine {
+.dot.mine-pending {
+  background: #cc8a15;
+}
+
+.dot.mine-approved {
   background: #3ca95c;
+}
+
+.dot.mine-rejected {
+  background: #d35c5c;
 }
 
 .selection-summary {
@@ -215,6 +235,13 @@
 .request-btn:disabled {
   background: #9fb0d4;
   cursor: not-allowed;
+}
+
+.request-btn.secondary {
+  margin-top: 8px;
+  background: #ebf1ff;
+  color: #234884;
+  border: 1px solid #bfd0f7;
 }
 
 .employee-panel {
