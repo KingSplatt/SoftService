@@ -14,6 +14,7 @@ public class SoftportalApplication {
 		SpringApplication.run(SoftportalApplication.class, args);
 	}
 
+	
 	@Bean
 	CommandLineRunner seedDefaultRoles(RoleRepository roleRepository) {
 		return args -> {
