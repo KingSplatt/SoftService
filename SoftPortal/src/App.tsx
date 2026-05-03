@@ -3,6 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login'
 import MainCalendar from './pages/MainCalendar'
 import Register from './pages/Register'
+import RequestsManagement from './pages/RequestsManagement'
+import RequestsReports from './pages/RequestsReports'
+import RoleManagement from './pages/RoleManagement'
+import MyRequests from './pages/MyRequests'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -21,6 +25,42 @@ function App() {
               <MainCalendar />
             </ProtectedRoute>
           } 
+        />
+
+        <Route
+          path="/mis-solicitudes"
+          element={
+            <ProtectedRoute>
+              <MyRequests />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/solicitudes-gestion"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'rh', 'rrhh', 'recursos humanos', 'recursos_humanos']}>
+              <RequestsManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reportes-solicitudes"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'rh', 'rrhh', 'recursos humanos', 'recursos_humanos']}>
+              <RequestsReports />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/gestion-roles"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <RoleManagement />
+            </ProtectedRoute>
+          }
         />
         
         {/* Ruta por defecto */}

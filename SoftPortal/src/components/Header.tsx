@@ -7,11 +7,14 @@ import '../styles/Header.css'
 
 interface HeaderProps {
   onManageRolesClick?: () => void
+  onOpenRequestsClick?: () => void
+  onOpenReportsClick?: () => void
+  onOpenMyRequestsClick?: () => void
 }
 
-export default function Header({ onManageRolesClick }: HeaderProps) {
+export default function Header({ onManageRolesClick, onOpenRequestsClick, onOpenReportsClick, onOpenMyRequestsClick }: HeaderProps) {
   const navigate = useNavigate()
-  const { user: currentUser, logout, isAdmin } = useAuth()
+  const { user: currentUser, logout, isAdmin, isAdminOrRh } = useAuth()
 
   const handleLogout = () => {
     logout()
@@ -21,9 +24,9 @@ export default function Header({ onManageRolesClick }: HeaderProps) {
   return (
     <header className="header-principal">
         <div className="contenedor-principal">
-            <div>
-                <h1 className="header-title">SoftPortal</h1>
-            </div>
+        <button type="button" className="header-brand" onClick={() => navigate('/dashboard')}>
+          <h1 className="header-title">SoftPortal</h1>
+        </button>
             <div className='contenedor-de-contenedores'>
                 <div className='contenedor-img'>
                     <img src={language} alt="Language" width={40}/>
@@ -31,13 +34,46 @@ export default function Header({ onManageRolesClick }: HeaderProps) {
                 <div className='contenedor-img'>
                     <img src={clock} alt="clock" width={40}/>
                 </div>
-                <div className='contenedor-img user-info'>
+          <button type="button" className='contenedor-img user-info' onClick={() => navigate('/dashboard')}>
                     <img src={user} alt="user" width={40} title={currentUser?.nombre_usuario}/>
                     <span className='usuario-nombre'>{currentUser?.nombre_usuario || 'Usuario'}</span>
-                </div>
-                {isAdmin && onManageRolesClick && (
+          </button>
+                {onOpenMyRequestsClick && (
                   <button
-                    onClick={onManageRolesClick}
+                    onClick={onOpenMyRequestsClick}
+                    className='nav-button'
+                    title='Mis solicitudes'
+                  >
+                    Mis Solicitudes
+                  </button>
+                )}
+                {isAdminOrRh && onOpenRequestsClick && (
+                  <button
+                    onClick={onOpenRequestsClick}
+                    className='nav-button'
+                    title='Gestion de solicitudes'
+                  >
+                    Solicitudes
+                  </button>
+                )}
+                {isAdminOrRh && onOpenReportsClick && (
+                  <button
+                    onClick={onOpenReportsClick}
+                    className='nav-button'
+                    title='Reportes'
+                  >
+                    Reportes
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      if (onManageRolesClick) {
+                        onManageRolesClick()
+                        return
+                      }
+                      navigate('/gestion-roles')
+                    }}
                     className='admin-button'
                     title='Gestionar roles'
                   >

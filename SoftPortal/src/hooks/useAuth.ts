@@ -18,6 +18,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isRh: boolean;
+  isAdminOrRh: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
@@ -110,13 +112,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
   }, []);
 
-  const isAdmin = user?.rol_nombre?.toLowerCase() === 'admin' || user?.id_rol === 1;
+  const normalizedRole = user?.rol_nombre?.trim().toLowerCase() || '';
+  const isAdmin = normalizedRole === 'admin' || user?.id_rol === 1;
+  const isRh = ['rh', 'rrhh', 'recursos humanos', 'recursos_humanos'].includes(normalizedRole);
+  const isAdminOrRh = isAdmin || isRh;
 
   const value = useMemo(
     () => ({
       user,
       isAuthenticated,
       isAdmin,
+      isRh,
+      isAdminOrRh,
       login,
       register,
       logout,
@@ -124,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       error,
       clearError,
     }),
-    [clearError, error, isAdmin, isAuthenticated, isLoading, login, logout, register, user],
+    [clearError, error, isAdmin, isAdminOrRh, isAuthenticated, isLoading, isRh, login, logout, register, user],
   );
 
   return createElement(AuthContext.Provider, { value }, children);
