@@ -22,4 +22,6 @@ public class SolicitudEstadoMasivoDto {
 
     @NotNull
     private String estadoNombre;
+    
+    private String motivo;
 }
