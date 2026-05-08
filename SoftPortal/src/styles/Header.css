@@ -7,6 +7,13 @@
     flex-direction: row;
 }
 
+.header-title{
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.8rem, 4vw, 2.3rem);
+    line-height: 1.1;
+    color: #ffffff
+}
+
 .header-brand {
     background: transparent;
     border: none;

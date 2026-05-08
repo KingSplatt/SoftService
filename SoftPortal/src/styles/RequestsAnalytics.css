@@ -11,6 +11,8 @@
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  justify-content: center;
+  text-align: center;
 }
 
 .analytics-content h1 {
