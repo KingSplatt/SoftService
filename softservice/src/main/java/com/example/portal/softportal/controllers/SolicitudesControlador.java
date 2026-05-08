@@ -2,6 +2,8 @@
 package com.example.portal.softportal.controllers;
 
 import com.example.portal.softportal.DTOs.CreateSolicitudDto;
+import com.example.portal.softportal.DTOs.EstadisticasMesilDto;
+import com.example.portal.softportal.DTOs.PrediccionSolicitudesDto;
 import com.example.portal.softportal.DTOs.SolicitudEstadoMasivoDto;
 import com.example.portal.softportal.DTOs.SolicitudDto;
 import com.example.portal.softportal.DTOs.SolicitudReporteResumenDto;
@@ -25,9 +27,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class SolicitudesControlador {
 
 	private final SolicitudService solicitudService;
+	private final com.example.portal.softportal.services.EmailService emailService;
 
-	public SolicitudesControlador(SolicitudService solicitudService) {
+	public SolicitudesControlador(SolicitudService solicitudService,
+			com.example.portal.softportal.services.EmailService emailService) {
 		this.solicitudService = solicitudService;
+		this.emailService = emailService;
 	}
 
 	/**
@@ -134,6 +139,46 @@ public class SolicitudesControlador {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	/**
+	 * Obtener estadísticas de solicitudes agrupadas por mes
+	 */
+	@GetMapping("/estadisticas/por-mes")
+	public ResponseEntity<List<EstadisticasMesilDto>> getEstadisticasPorMes() {
+		try {
+			List<EstadisticasMesilDto> estadisticas = solicitudService.obtenerEstadisticasPorMes();
+			return ResponseEntity.ok(estadisticas);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	/**
+	 * Obtener predicción de solicitudes para los próximos 3 meses
+	 */
+	@GetMapping("/estadisticas/prediccion")
+	public ResponseEntity<PrediccionSolicitudesDto> getPrediccion() {
+		try {
+			PrediccionSolicitudesDto prediccion = solicitudService.obtenerPrediccion();
+			return ResponseEntity.ok(prediccion);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	/**
+	 * Endpoint de prueba para validar el envío SMTP.
+	 */
+	@PostMapping("/prueba-correo")
+	public ResponseEntity<String> probarCorreo(
+			@RequestParam(defaultValue = "malp18774@gmail.com") String destinatario) {
+		try {
+			emailService.enviarCorreoPrueba(destinatario);
+			return ResponseEntity.ok("Correo de prueba enviado a " + destinatario);
+		} catch (IllegalStateException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		}
 	}
 }
