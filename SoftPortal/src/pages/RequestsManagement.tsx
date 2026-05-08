@@ -58,6 +58,11 @@ export default function RequestsManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showMotivoModal, setShowMotivoModal] = useState(false);
+  const [modalAction, setModalAction] = useState<'aprobado' | 'rechazado' | 'pendiente' | null>(null);
+  const [modalMotivo, setModalMotivo] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const loadSolicitudes = useCallback(async () => {
     if (!user?.id) {
@@ -144,7 +149,16 @@ export default function RequestsManagement() {
     setSelectedIds([]);
   };
 
-  const applyStatus = async (estadoNombre: 'aprobado' | 'rechazado' | 'pendiente') => {
+  // Abre modal para solicitar motivo antes de aplicar el cambio
+  const openMotivoModal = (accion: 'aprobado' | 'rechazado' | 'pendiente') => {
+    if (!user?.id || selectedIds.length === 0) return;
+    setModalAction(accion);
+    setModalMotivo('');
+    setModalError(null);
+    setShowMotivoModal(true);
+  };
+
+  const applyStatus = async (estadoNombre: 'aprobado' | 'rechazado' | 'pendiente', motivo?: string) => {
     if (!user?.id || selectedIds.length === 0) {
       return;
     }
@@ -154,16 +168,22 @@ export default function RequestsManagement() {
     setSuccess(null);
 
     try {
+      const bodyPayload: any = {
+        solicitudIds: selectedIds,
+        actorUserId: user.id,
+        estadoNombre,
+      };
+
+      if (motivo && motivo.trim().length > 0) {
+        bodyPayload.motivo = motivo.trim();
+      }
+
       const response = await fetch(`${API_BASE_URL}/solicitudes/gestion/estado`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          solicitudIds: selectedIds,
-          actorUserId: user.id,
-          estadoNombre,
-        }),
+        body: JSON.stringify(bodyPayload),
       });
 
       if (!response.ok) {
@@ -178,6 +198,27 @@ export default function RequestsManagement() {
       setError(message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const closeMotivoModal = () => {
+    setShowMotivoModal(false);
+    setModalAction(null);
+    setModalMotivo('');
+    setModalError(null);
+  };
+
+  const confirmMotivoModal = async () => {
+    if (!modalAction) return;
+    setModalLoading(true);
+    setModalError(null);
+    try {
+      await applyStatus(modalAction, modalMotivo);
+      closeMotivoModal();
+    } catch (e) {
+      setModalError(e instanceof Error ? e.message : 'Error al aplicar estado');
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -243,13 +284,13 @@ export default function RequestsManagement() {
             <button type="button" onClick={clearSelection} disabled={selectedTotal === 0}>
               Limpiar seleccion
             </button>
-            <button type="button" className="accept" onClick={() => void applyStatus('aprobado')} disabled={selectedTotal === 0 || isLoading}>
+            <button type="button" className="accept" onClick={() => openMotivoModal('aprobado')} disabled={selectedTotal === 0 || isLoading}>
               Aceptar
             </button>
-            <button type="button" className="reject" onClick={() => void applyStatus('rechazado')} disabled={selectedTotal === 0 || isLoading}>
+            <button type="button" className="reject" onClick={() => openMotivoModal('rechazado')} disabled={selectedTotal === 0 || isLoading}>
               Rechazar
             </button>
-            <button type="button" className="pending" onClick={() => void applyStatus('pendiente')} disabled={selectedTotal === 0 || isLoading}>
+            <button type="button" className="pending" onClick={() => openMotivoModal('pendiente')} disabled={selectedTotal === 0 || isLoading}>
               Pendiente
             </button>
           </div>
@@ -259,6 +300,30 @@ export default function RequestsManagement() {
 
         {error && <div className="requests-message error">{error}</div>}
         {success && <div className="requests-message success">{success}</div>}
+
+        {showMotivoModal && (
+          <div className="modal-backdrop">
+            <div className="modal-card">
+              <h3>Confirmar acción: {modalAction}</h3>
+              <p>Ingrese un motivo (opcional). Se incluirá en el email enviado a los usuarios.</p>
+              <textarea
+                value={modalMotivo}
+                onChange={(e) => setModalMotivo(e.target.value)}
+                placeholder="Motivo (opcional)"
+                rows={4}
+              />
+              {modalError && <div className="modal-error">{modalError}</div>}
+              <div className="modal-actions">
+                <button type="button" onClick={closeMotivoModal} disabled={modalLoading}>
+                  Cancelar
+                </button>
+                <button type="button" className="accept" onClick={() => void confirmMotivoModal()} disabled={modalLoading}>
+                  {modalLoading ? 'Aplicando...' : 'Confirmar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <section className="requests-table-wrap">
           <table className="requests-table">

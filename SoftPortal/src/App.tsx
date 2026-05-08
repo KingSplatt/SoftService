@@ -4,7 +4,7 @@ import Login from './pages/Login'
 import MainCalendar from './pages/MainCalendar'
 import Register from './pages/Register'
 import RequestsManagement from './pages/RequestsManagement'
-import RequestsReports from './pages/RequestsReports'
+import RequestsAnalytics from './pages/RequestsAnalytics'
 import RoleManagement from './pages/RoleManagement'
 import MyRequests from './pages/MyRequests'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -45,11 +45,13 @@ function App() {
           }
         />
 
+        {/* Reportes integrado dentro de Análisis; ruta /reportes-solicitudes eliminada */}
+
         <Route
-          path="/reportes-solicitudes"
+          path="/analisis-solicitudes"
           element={
             <ProtectedRoute allowedRoles={['admin', 'rh', 'rrhh', 'recursos humanos', 'recursos_humanos']}>
-              <RequestsReports />
+              <RequestsAnalytics />
             </ProtectedRoute>
           }
         />

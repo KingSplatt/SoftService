@@ -38,31 +38,47 @@ export default function Header({ onManageRolesClick, onOpenRequestsClick, onOpen
                     <img src={user} alt="user" width={40} title={currentUser?.nombre_usuario}/>
                     <span className='usuario-nombre'>{currentUser?.nombre_usuario || 'Usuario'}</span>
           </button>
-                {onOpenMyRequestsClick && (
-                  <button
-                    onClick={onOpenMyRequestsClick}
-                    className='nav-button'
-                    title='Mis solicitudes'
-                  >
-                    Mis Solicitudes
-                  </button>
+                {/* Mostrar Mis Solicitudes siempre; usar callback si se provee */}
+                <button
+                  onClick={() => {
+                    if (onOpenMyRequestsClick) {
+                      onOpenMyRequestsClick()
+                      return
+                    }
+                    navigate('/mis-solicitudes')
+                  }}
+                  className='nav-button'
+                  title='Mis solicitudes'
+                >
+                  Mis Solicitudes
+                </button>
+                {/* Para Admin/RH mostrar botones y navegar por defecto si no hay handlers */}
+                {isAdminOrRh && (
+                  <>
+                    <button
+                      onClick={() => {
+                        if (onOpenRequestsClick) {
+                          onOpenRequestsClick()
+                          return
+                        }
+                        navigate('/gestion-solicitudes')
+                      }}
+                      className='nav-button'
+                      title='Gestion de solicitudes'
+                    >
+                      Solicitudes
+                    </button>
+
+                    {/* Reportes eliminado; funcionalidad dentro de Análisis */}
+                  </>
                 )}
-                {isAdminOrRh && onOpenRequestsClick && (
+                {isAdminOrRh && (
                   <button
-                    onClick={onOpenRequestsClick}
+                    onClick={() => navigate('/analisis-solicitudes')}
                     className='nav-button'
-                    title='Gestion de solicitudes'
+                    title='Análisis de solicitudes'
                   >
-                    Solicitudes
-                  </button>
-                )}
-                {isAdminOrRh && onOpenReportsClick && (
-                  <button
-                    onClick={onOpenReportsClick}
-                    className='nav-button'
-                    title='Reportes'
-                  >
-                    Reportes
+                    Análisis
                   </button>
                 )}
                 {isAdmin && (
