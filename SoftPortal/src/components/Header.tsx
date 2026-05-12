@@ -61,7 +61,7 @@ export default function Header({ onManageRolesClick, onOpenRequestsClick, onOpen
                           onOpenRequestsClick()
                           return
                         }
-                        navigate('/gestion-solicitudes')
+                          navigate('/solicitudes-gestion')
                       }}
                       className='nav-button'
                       title='Gestion de solicitudes'
