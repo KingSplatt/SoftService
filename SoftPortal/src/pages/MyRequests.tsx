@@ -16,6 +16,7 @@ interface SolicitudItem {
   fechaFin: string;
   motivo: string;
   fechaSolicitud: string;
+  respuestaRh?: string;
 }
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -55,6 +56,8 @@ export default function MyRequests() {
   const [filterAnio, setFilterAnio] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalSolicitud, setModalSolicitud] = useState<SolicitudItem | null>(null);
 
   const loadMyRequests = useCallback(async () => {
     if (!user?.id) {
@@ -194,7 +197,7 @@ export default function MyRequests() {
               </thead>
               <tbody>
                 {filteredRequests.map((item) => (
-                  <tr key={item.idSolicitud}>
+                  <tr key={item.idSolicitud} onClick={() => { setModalSolicitud(item); setShowModal(true); }} style={{ cursor: 'pointer' }}>
                     <td>{item.tipoNombre}</td>
                     <td>
                       <span className={`status-pill ${item.estadoNombre.toLowerCase()}`}>{item.estadoNombre}</span>
@@ -220,6 +223,37 @@ export default function MyRequests() {
           )}
         </section>
       </main>
+      {showModal && modalSolicitud && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <section className='modal-card-section'>
+                <h3>Solicitud </h3>
+              <section className='modal-info'>
+
+                <p><strong>Tipo:</strong> {modalSolicitud.tipoNombre}</p>
+                <p><strong>Estado:</strong> {modalSolicitud.estadoNombre}</p>
+                <p><strong>Fecha inicio:</strong> {formatDate(modalSolicitud.fechaInicio)}</p>
+                <p><strong>Fecha fin:</strong> {formatDate(modalSolicitud.fechaFin)}</p>
+                <p><strong>Motivo del colaborador:</strong> {modalSolicitud.motivo || '-'}</p>
+              </section>
+              <hr />
+              <section className='modal-info-bottom'>
+                <h4>Respuesta de Recursos Humanos:</h4>
+                <div className="modal-response">
+                  {modalSolicitud.respuestaRh && modalSolicitud.respuestaRh.trim() !== '' ? (
+                    <p>{modalSolicitud.respuestaRh}</p>
+                  ) : (
+                    <p className="pending-text">Pendiente</p>
+                  )}
+                </div>
+                <div className="modal-actions">
+                  <button type="button" onClick={() => { setShowModal(false); setModalSolicitud(null); }}>Cerrar</button>
+                </div>
+              </section>
+            </section>
+          </div>
+        </div>
+      )}
     </>
   );
 }

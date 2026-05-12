@@ -43,9 +43,9 @@ export default function Login() {
           <p>Sistema de Gestión de Permisos</p>
         </div>
 
-        <div className="demo-info">
+        {/* <div className="demo-info">
           <strong>Demo:</strong> Usa email: <strong>admin@softtek.com</strong> y password: <strong>123</strong>
-        </div>
+        </div> */}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

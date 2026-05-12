@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #323fff 0%, #8fe5ac 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -38,15 +38,16 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 10px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2048f7 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .login-header p {
-  color: #999;
+  color: #000000;
   font-size: 1rem;
+  font-weight: bold;
   margin: 0;
 }
 
@@ -60,6 +61,7 @@
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 0.95rem;
+  font-size: 18px;
 }
 
 .form-group input {
@@ -70,12 +72,13 @@
   font-size: 1rem;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  font-size: 18px;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #080c20;
+  box-shadow: 0 0 0 3px rgba(17, 52, 207, 0.753);
 }
 
 .form-group input::placeholder {
@@ -159,7 +162,7 @@
 }
 
 .form-footer p {
-  color: #666;
+  color: #000000;
   margin: 0;
   font-size: 0.95rem;
 }
@@ -172,7 +175,7 @@
 }
 
 .form-footer a:hover {
-  color: #764ba2;
+  color: #3153eb;
   text-decoration: underline;
 }
 

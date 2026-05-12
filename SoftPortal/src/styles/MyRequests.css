@@ -17,11 +17,12 @@
 
 .my-requests-header {
   padding: 20px;
+  text-align: center;
 }
 
 .my-requests-header h1 {
   margin: 0;
-  color: #1d2a4f;
+  color: #000000;
 }
 
 .my-requests-header p {
@@ -42,7 +43,8 @@
 .my-requests-summary h2 {
   margin: 0;
   font-size: 0.9rem;
-  color: #51608a;
+  color: #000000;
+  text-align: center;
 }
 
 .my-requests-summary strong {
@@ -50,6 +52,8 @@
   margin-top: 8px;
   font-size: 1.5rem;
   color: #1d2a4f;
+  margin: 0;
+  text-align: center;
 }
 
 .my-requests-filters {
@@ -122,11 +126,26 @@
   text-align: left;
   padding: 12px;
   font-size: 0.95rem;
+  text-align: center;
 }
 
 .my-requests-table th {
   color: #273048;
   background: #f5f7fb;
+}
+
+.my-requests-table table{
+  text-align: center;
+}
+
+.my-requests-table tbody {
+  color: #000000;
+  transition: color 0.4s ease;
+}
+
+.my-requests-table tbody :hover{
+  color: #3e4dcf;
+  transition: color 0.4s ease;
 }
 
 .status-pill {
@@ -165,4 +184,61 @@
   .my-requests-filters {
     align-items: stretch;
   }
+}
+
+/* Modal styles for solicitud details */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+.modal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 720px;
+  max-width: calc(100% - 40px);
+  box-shadow: 0 12px 40px rgba(16,24,40,0.2);
+  border: 1px solid #e6e9f2;
+}
+.modal-card h3 { margin-top: 0; }
+.modal-response { background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e6eefb; min-height: 48px; }
+.pending-text { color: #b45309; font-weight: 700; }
+.modal-actions { display:flex; justify-content:flex-end; margin-top:14px; }
+.modal-actions button { background:#2563eb; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; }
+
+.modal-card-section {
+  width: 100%;
+  border-color: #000000;
+  padding: 8px;
+}
+
+.modal-card-section h3{
+  margin: 0;
+  text-align: center;
+}
+
+
+.modal-info {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e6eefb;
+  background-color: #a36767;
+  background: linear-gradient(160deg, #f8f9fa, #f0f2f8);
+  color: #000000;
+}
+
+.modal-info h3{
+  margin-top: 0;
+  text-align: center;
+
+}
+
+.modal-info-bottom h4{
+  text-align: center;
 }

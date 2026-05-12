@@ -32,17 +32,17 @@
 
 .planner-head p {
   margin: 0;
-  color: #4d5873;
-  line-height: 1.45;
+  color: #000000;
+  line-height: 1.75;
 }
 
 .planner-kicker {
   margin: 0;
-  color: #1259d8;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  color: #000000;
+  font-weight: bold;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 1rem;
   text-align: center;
 }
 
@@ -76,7 +76,8 @@
   border: 1px solid #d6def5;
   border-radius: 14px;
   padding: 14px;
-  background: radial-gradient(circle at 30%, 70%, #d8e2ff 0, transparent 95%), #fff;
+  background: 
+    radial-gradient(circle at 50% 50%, #e3e3e6 0px, transparent 55%), #ffffff;
 }
 
 .weekday-row,
@@ -92,7 +93,7 @@
 
 .weekday-row span {
   text-align: center;
-  color: #586386;
+  color: #0d0d0e;
   font-size: 0.81rem;
   font-weight: 700;
 }
@@ -101,8 +102,8 @@
   border: 1px solid transparent;
   min-height: 44px;
   border-radius: 11px;
-  background: #f8faff;
-  color: #1f2c4d;
+  background: #ffffff;
+  color: #232427;
   cursor: pointer;
   transition: transform 130ms ease, background-color 130ms ease;
 }
@@ -252,6 +253,12 @@
 
 .employee-card {
   padding: 20px;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.employee-card:hover {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(29, 39, 58, 0.12);
 }
 
 .employee-card h2 {

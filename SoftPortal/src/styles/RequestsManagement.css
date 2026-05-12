@@ -17,6 +17,7 @@
 
 .requests-header-card {
   padding: 20px;
+  text-align: center;
 }
 
 .requests-header-card h1 {
@@ -26,7 +27,7 @@
 
 .requests-header-card p {
   margin: 8px 0 0;
-  color: #4d5873;
+  color: #000000;
 }
 
 .requests-toolbar-card {

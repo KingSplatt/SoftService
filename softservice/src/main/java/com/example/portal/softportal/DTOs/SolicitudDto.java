@@ -24,5 +24,6 @@ public class SolicitudDto {
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
     private String motivo;
+    private String respuestaRh;
     private LocalDateTime fechaSolicitud;
 }

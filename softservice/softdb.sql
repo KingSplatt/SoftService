@@ -82,3 +82,6 @@ VALUES
 ('Beatriz Soto', 'beatriz.soto@softtek.com', 'Disneyxa1', 2, 18),
 ('Ricardo Luna', 'ricardo.luna@softtek.com', 'Disneyxa1', 2, 14),
 ('Sofía Valenzuela', 'sofia.valenzuela@softtek.com', 'Disneyxa1', 2, 16);
+
+
+ALTER TABLE solicitudes ADD COLUMN respuesta_rh TEXT;

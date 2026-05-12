@@ -53,6 +53,9 @@ public class Solicitud {
     @Column(name = "motivo", columnDefinition = "TEXT")
     private String motivo;
 
+    @Column(name = "respuesta_rh", columnDefinition = "TEXT")
+    private String respuestaRh;
+
     @Column(name = "fecha_solicitud", nullable = false)
     private LocalDateTime fechaSolicitud;
 

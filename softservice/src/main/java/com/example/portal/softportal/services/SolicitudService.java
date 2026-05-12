@@ -154,6 +154,10 @@ public class SolicitudService {
                                         : "";
                         estadoPrevioPorSolicitud.put(s.getIdSolicitud(), nombrePrev);
                         s.setEstadoSolicitud(nuevoEstado);
+                        // Guardar comentario / respuesta de Recursos Humanos si se proporcionó
+                        if (request.getMotivo() != null && !request.getMotivo().isBlank()) {
+                                s.setRespuestaRh(request.getMotivo().trim());
+                        }
                 }
 
                 List<Solicitud> solicitudesActualizadas = solicitudRepository.saveAll(solicitudes);

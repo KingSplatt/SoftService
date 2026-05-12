@@ -23,6 +23,7 @@ public final class SolicitudMapper {
                 .fechaInicio(entity.getFechaInicio())
                 .fechaFin(entity.getFechaFin())
                 .motivo(entity.getMotivo())
+                .respuestaRh(entity.getRespuestaRh())
                 .fechaSolicitud(entity.getFechaSolicitud())
                 .build();
     }
