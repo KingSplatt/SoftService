@@ -11,9 +11,9 @@
   background: white;
   border-radius: 15px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 50px 40px;
+  padding: 60px 52px;
   width: 100%;
-  max-width: 450px;
+  max-width: 560px;
   animation: slideUp 0.5s ease-out;
 }
 
@@ -30,12 +30,19 @@
 
 .login-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 34px;
+}
+
+.auth-logo {
+  display: block;
+  width: min(220px, 70%);
+  height: auto;
+  margin: 0 auto 18px;
 }
 
 .login-header h1 {
   color: #333;
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
   margin-bottom: 10px;
   background: linear-gradient(135deg, #2048f7 0%, #764ba2 100%);
@@ -46,13 +53,13 @@
 
 .login-header p {
   color: #000000;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bold;
   margin: 0;
 }
 
 .form-group {
-  margin-bottom: 25px;
+  margin-bottom: 28px;
 }
 
 .form-group label {
@@ -61,18 +68,17 @@
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 0.95rem;
-  font-size: 18px;
+  font-size: 1.05rem;
 }
 
 .form-group input {
   width: 100%;
-  padding: 12px 15px;
+  padding: 14px 16px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 1.05rem;
   transition: all 0.3s ease;
   box-sizing: border-box;
-  font-size: 18px;
 }
 
 .form-group input:focus {
@@ -110,12 +116,12 @@
 
 .login-button {
   width: 100%;
-  padding: 12px;
+  padding: 14px 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -156,15 +162,15 @@
 
 .form-footer {
   text-align: center;
-  margin-top: 25px;
-  padding-top: 25px;
+  margin-top: 28px;
+  padding-top: 28px;
   border-top: 1px solid #e0e0e0;
 }
 
 .form-footer p {
   color: #000000;
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .form-footer a {
@@ -200,14 +206,18 @@
   }
 
   .login-card {
-    padding: 30px 20px;
+    padding: 32px 22px;
+  }
+
+  .auth-logo {
+    width: min(180px, 72%);
   }
 
   .login-header h1 {
-    font-size: 2rem;
+    font-size: 2.25rem;
   }
 
   .login-header p {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 }

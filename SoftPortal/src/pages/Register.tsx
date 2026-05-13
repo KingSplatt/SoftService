@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import logoCompleto from '../assets/logosoft.png';
 import '../styles/Login.css';
 
 export default function Register() {
@@ -58,6 +59,7 @@ export default function Register() {
 		<div className="login-container">
 			<div className="login-card">
 				<div className="login-header">
+					<img className="auth-logo" src={logoCompleto} alt="Softtek" />
 					<h1>Crear Cuenta</h1>
 					<p>Registra tu usuario para acceder a SoftPortal</p>
 				</div>

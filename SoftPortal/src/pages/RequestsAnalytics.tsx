@@ -174,7 +174,8 @@ export default function RequestsAnalytics() {
   
 
   const getTendenciaColor = (tendencia: string): string => {
-    switch (tendencia) {
+    const normalized = (tendencia || '').toString().trim().toUpperCase();
+    switch (normalized) {
       case 'CRECIMIENTO':
         return '#ef4444'; // rojo
       case 'DECRECIMIENTO':
@@ -182,12 +183,13 @@ export default function RequestsAnalytics() {
       case 'ESTABLE':
         return '#3b82f6'; // azul
       default:
-        return '#6b7280'; // gris
+        return '#3b82f6'; // azul (default)
     }
   };
 
   const getTendenciaLabel = (tendencia: string): string => {
-    switch (tendencia) {
+    const normalized = (tendencia || '').toString().trim().toUpperCase();
+    switch (normalized) {
       case 'CRECIMIENTO':
         return '📈 CRECIMIENTO';
       case 'DECRECIMIENTO':
@@ -195,7 +197,7 @@ export default function RequestsAnalytics() {
       case 'ESTABLE':
         return '➡️ ESTABLE';
       default:
-        return 'INSUFICIENTE DATOS';
+        return '➡️ ESTABLE';
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import logoCompleto from '../assets/logosoft.png';
 import '../styles/Login.css';
 
 export default function Login() {
@@ -39,6 +40,7 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
+          <img className="auth-logo" src={logoCompleto} alt="Softtek" />
           <h1>SoftPortal</h1>
           <p>Sistema de Gestión de Permisos</p>
         </div>

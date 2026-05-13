@@ -16,11 +16,13 @@
 
 .roles-header-card {
   padding: 20px;
+  text-align: center;
 }
 
 .roles-header-card h1 {
   margin: 0;
   color: #1d2a4f;
+  text-align: center;
 }
 
 .roles-header-card p {
