@@ -298,6 +298,10 @@ export default function MainCalendar() {
 
     return solicitudes
       .filter((solicitud) => solicitud.usuarioId === user.id)
+      .filter((solicitud) => {
+        const status = (solicitud.estadoNombre || '').trim().toLowerCase();
+        return !status.includes('rechaz') && !status.includes('cancel');
+      })
       .reduce((total, solicitud) => {
         return total + countDaysWithinRange(solicitud.fechaInicio, solicitud.fechaFin, contractInfo.cycleStart, contractInfo.cycleEnd);
       }, 0);
@@ -396,11 +400,11 @@ export default function MainCalendar() {
     void loadDashboardData();
   }, [loadDashboardData]);
 
-  const toggleDate = (dateIso: string, inCurrentMonth: boolean, isPast: boolean) => {
+  const toggleDate = (dateIso: string, inCurrentMonth: boolean, isPast: boolean, isWeekend: boolean) => {
     const myStatus = myRequestStatusByDay.get(dateIso);
     const hasBlockingStatus = myStatus === 'pendiente' || myStatus === 'aprobado';
 
-    if (!inCurrentMonth || isPast || occupiedDaysByArea.has(dateIso) || hasBlockingStatus) {
+    if (!inCurrentMonth || isPast || isWeekend || occupiedDaysByArea.has(dateIso) || hasBlockingStatus) {
       return;
     }
 
@@ -548,6 +552,7 @@ export default function MainCalendar() {
               <div className="days-grid">
                 {calendarDays.map((dayCell) => {
                   const isPast = dayCell.date < today;
+                  const isWeekend = dayCell.date.getDay() === 0 || dayCell.date.getDay() === 6;
                   const isSelected = selectedDates.includes(dayCell.iso);
                   const isOccupied = occupiedDaysByArea.has(dayCell.iso);
                   const myStatus = myRequestStatusByDay.get(dayCell.iso);
@@ -561,6 +566,7 @@ export default function MainCalendar() {
                       className={[
                         'day-cell',
                         dayCell.inCurrentMonth ? '' : 'outside',
+                        isWeekend ? 'weekend' : '',
                         isToday ? 'today' : '',
                         isSelected ? 'selected' : '',
                         isOccupied ? 'occupied' : '',
@@ -568,10 +574,12 @@ export default function MainCalendar() {
                       ]
                         .filter(Boolean)
                         .join(' ')}
-                      onClick={() => toggleDate(dayCell.iso, dayCell.inCurrentMonth, isPast)}
-                      disabled={!dayCell.inCurrentMonth || isPast || isOccupied || isMineBlocking}
+                      onClick={() => toggleDate(dayCell.iso, dayCell.inCurrentMonth, isPast, isWeekend)}
+                      disabled={!dayCell.inCurrentMonth || isPast || isWeekend || isOccupied || isMineBlocking}
                       title={
-                        myStatus === 'aprobado'
+                        isWeekend
+                          ? 'Los fines de semana no estan disponibles para solicitudes'
+                          : myStatus === 'aprobado'
                           ? 'Tienes una solicitud aprobada en este dia'
                           : myStatus === 'pendiente'
                             ? 'Tienes una solicitud pendiente en este dia'

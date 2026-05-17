@@ -364,7 +364,14 @@ export default function RequestsAnalytics() {
                 <input id="dia" type="number" min={1} max={31} value={diaFiltro} onChange={(e) => setDiaFiltro(e.target.value)} placeholder="Opcional" />
               </div>
               <div className="filter-actions">
-                <button type="button" onClick={() => void loadReporte(true)} disabled={isLoadingReporte}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void loadReporte(true);
+                    void fetchAndAggregateDaily(selectedStatus);
+                  }}
+                  disabled={isLoadingReporte}
+                >
                   {isLoadingReporte ? 'Cargando...' : 'Aplicar filtros'}
                 </button>
                 <button
@@ -373,7 +380,8 @@ export default function RequestsAnalytics() {
                     setDiaFiltro('');
                     setMesFiltro('');
                     setAnioFiltro(String(new Date().getFullYear()));
-                    void loadReporte(false);
+                    setSelectedStatus('all');
+                    void loadData();
                   }}
                 >
                   Limpiar
